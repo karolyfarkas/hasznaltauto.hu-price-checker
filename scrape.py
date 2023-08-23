@@ -34,7 +34,7 @@ def publish_prices(average_price, max_price, min_price):
         if rc == 0:
             print("Connected to MQTT Broker!")
         else:
-            print("Failed to connect, return code %d\n", rc)
+            print(f"Failed to connect, return code { rc }")
     # Set Connecting Client ID
     client = mqtt.Client(client_id)
     client.username_pw_set(username, password)

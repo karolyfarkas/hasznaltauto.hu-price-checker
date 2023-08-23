@@ -5,10 +5,11 @@ import paho.mqtt.client as mqtt
 import random
 import time
 import os
+import logging
 
 scrape_url = os.environ["SCRAPE_URL"]
-broker = os.environ["BROKER"]
-port = int(os.environ["PORT"])
+broker = os.environ["BROKER_HOSTNAME"]
+port = int(os.environ["BROKER_PORT"])
 average_topic = os.environ["AVERAGE_TOPIC"]
 max_topic = os.environ["MAX_TOPIC"]
 min_topic = os.environ["MIN_TOPIC"]
@@ -16,6 +17,8 @@ username = os.environ["USERNAME"]
 password = os.environ["PASSWORD"]
 
 client_id = f'python-mqtt-{random.randint(0, 1000)}'
+
+logging.basicConfig(encoding='utf-8', level=logging.INFO)
 
 def scrape_site(scrape_url):
     result = requests.get(scrape_url)
@@ -32,10 +35,10 @@ def scrape_site(scrape_url):
 def publish_prices(average_price, max_price, min_price):
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
-            print("Connected to MQTT Broker!")
+            logging.info("Connected to MQTT Broker!")
         else:
-            print(f"Failed to connect, return code { rc }")
-    # Set Connecting Client ID
+            logging.error(f"Failed to connect to MQTT broker, return code { rc }")
+
     client = mqtt.Client(client_id)
     client.username_pw_set(username, password)
     client.on_connect = on_connect

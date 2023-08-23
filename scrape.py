@@ -45,9 +45,25 @@ def publish_prices(average_price, max_price, min_price):
     client.connect(broker, port)
     client.loop_start()
     time.sleep(2) # on_connect callback is async so we have to wait for the connection
-    client.publish(average_topic, average_price)
-    client.publish(max_topic, max_price)
-    client.publish(min_topic, min_price)
+    
+    status, _ = client.publish(average_topic, average_price, qos=1)
+    if status == 0:
+        logging.info(f"Message sent to `{average_topic}`")
+    else:
+        logging.error(f"Failed to send message to topic {average_topic}")
+    
+    status, _ = client.publish(max_topic, max_price, qos=1)
+    if status == 0:
+        logging.info(f"Message sent to `{max_topic}`")
+    else:
+        logging.error(f"Failed to send message to topic {max_topic}")
+    
+    status, _ = client.publish(min_topic, min_price, qos=1)
+    if status == 0:
+        logging.info(f"Message sent to `{min_topic}`")
+    else:
+        logging.error(f"Failed to send message to topic {min_topic}")
+
     client.loop_stop() 
 
 integer_prices = scrape_site(scrape_url)
@@ -55,8 +71,6 @@ average_price = sum(integer_prices) / len(integer_prices)
 max_price = max(integer_prices)
 min_price = min(integer_prices)
 
-print("Maximum price: ", max_price)
-print("Minimum price: ", min_price)
-print("Average price: ", average_price)
+logging.info(f"Calculated prices: Min: { min_price }, Max: { max_price } Avg: { average_price }")
 
 publish_prices(average_price, max_price, min_price)

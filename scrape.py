@@ -17,27 +17,32 @@ try:
     average_topic = os.environ["AVERAGE_TOPIC"]
     max_topic = os.environ["MAX_TOPIC"]
     min_topic = os.environ["MIN_TOPIC"]
-    username = os.environ["USERNAME"]
-    password = os.environ["PASSWORD"]
+    mqtt_username = os.environ["MQTT_USERNAME"]
+    mqtt_password = os.environ["MQTT_PASSWORD"]
 except:
     logging.error("Environment variables are not set up correctly!")
     sys.exit()
 
 def job():
-    # scrape site
-    integer_prices = scrape_site(scrape_url)
-    average_price = sum(integer_prices) / len(integer_prices)
-    max_price = max(integer_prices)
-    min_price = min(integer_prices)
-    logging.info(f"Calculated prices: Min: { min_price }, Max: { max_price }, Avg: { average_price }")
-    
-    # publish calculated prices to mqtt
+    # Scrape site
+    try:
+        integer_prices = scrape_site(scrape_url)
+        average_price = sum(integer_prices) / len(integer_prices)
+        max_price = max(integer_prices)
+        min_price = min(integer_prices)
+        logging.info("Scraping the site succeded.")
+        logging.info(f"Calculated prices: Min: { min_price }, Max: { max_price }, Avg: { average_price }")
+    except:
+        logging.error("Scraping the site failed.")
+        return
+
+    # Publish calculated prices to mqtt
     publish_prices(average_price, max_price, min_price)
 
-# Setup
+# Setup variables, logging and schedule
 client_id = f'python-mqtt-{random.randint(0, 1000)}'
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
-schedule.every().day.at("9:00", "Europe/Budapest").do(job)
+schedule.every().day.at("09:00", "Europe/Budapest").do(job)
 schedule.every().day.at("12:00", "Europe/Budapest").do(job)
 
 def scrape_site(scrape_url):
@@ -60,7 +65,7 @@ def publish_prices(average_price, max_price, min_price):
             logging.error(f"Failed to connect to MQTT broker, return code { rc }")
 
     client = mqtt.Client(client_id)
-    client.username_pw_set(username, password)
+    client.username_pw_set(mqtt_username, mqtt_password)
     client.on_connect = on_connect
     client.connect(broker, port)
     client.loop_start()
@@ -79,6 +84,10 @@ def publish_prices(average_price, max_price, min_price):
 
     client.loop_stop() 
 
+# Run the job on start
+job()
+
+# Run the job as per the schedule
 while(True):
     schedule.run_pending()
     time.sleep(1)

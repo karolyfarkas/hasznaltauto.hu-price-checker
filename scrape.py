@@ -41,7 +41,7 @@ def job():
 
 # Setup variables, logging and schedule
 client_id = f'python-mqtt-{random.randint(0, 1000)}'
-logging.basicConfig(encoding='utf-8', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', encoding='utf-8', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
 schedule.every().day.at("09:00", "Europe/Budapest").do(job)
 schedule.every().day.at("12:00", "Europe/Budapest").do(job)
 

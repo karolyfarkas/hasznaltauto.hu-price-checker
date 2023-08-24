@@ -6,19 +6,39 @@ import random
 import time
 import os
 import logging
+import sys
+import schedule
 
-scrape_url = os.environ["SCRAPE_URL"]
-broker = os.environ["BROKER_HOSTNAME"]
-port = int(os.environ["BROKER_PORT"])
-average_topic = os.environ["AVERAGE_TOPIC"]
-max_topic = os.environ["MAX_TOPIC"]
-min_topic = os.environ["MIN_TOPIC"]
-username = os.environ["USERNAME"]
-password = os.environ["PASSWORD"]
+# Set up env variables
+try:
+    scrape_url = os.environ["SCRAPE_URL"]
+    broker = os.environ["BROKER_HOSTNAME"]
+    port = int(os.environ["BROKER_PORT"])
+    average_topic = os.environ["AVERAGE_TOPIC"]
+    max_topic = os.environ["MAX_TOPIC"]
+    min_topic = os.environ["MIN_TOPIC"]
+    username = os.environ["USERNAME"]
+    password = os.environ["PASSWORD"]
+except:
+    logging.error("Environment variables are not set up correctly!")
+    sys.exit()
 
+def job():
+    # scrape site
+    integer_prices = scrape_site(scrape_url)
+    average_price = sum(integer_prices) / len(integer_prices)
+    max_price = max(integer_prices)
+    min_price = min(integer_prices)
+    logging.info(f"Calculated prices: Min: { min_price }, Max: { max_price }, Avg: { average_price }")
+    
+    # publish calculated prices to mqtt
+    publish_prices(average_price, max_price, min_price)
+
+# Setup
 client_id = f'python-mqtt-{random.randint(0, 1000)}'
-
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
+schedule.every().day.at("9:00", "Europe/Budapest").do(job)
+schedule.every().day.at("12:00", "Europe/Budapest").do(job)
 
 def scrape_site(scrape_url):
     result = requests.get(scrape_url)
@@ -59,11 +79,6 @@ def publish_prices(average_price, max_price, min_price):
 
     client.loop_stop() 
 
-integer_prices = scrape_site(scrape_url)
-average_price = sum(integer_prices) / len(integer_prices)
-max_price = max(integer_prices)
-min_price = min(integer_prices)
-
-logging.info(f"Calculated prices: Min: { min_price }, Max: { max_price }, Avg: { average_price }")
-
-publish_prices(average_price, max_price, min_price)
+while(True):
+    schedule.run_pending()
+    time.sleep(1)

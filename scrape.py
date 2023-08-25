@@ -27,7 +27,7 @@ def job():
     # Scrape site
     try:
         integer_prices = scrape_site(scrape_url)
-        average_price = sum(integer_prices) / len(integer_prices)
+        average_price = round(sum(integer_prices) / len(integer_prices))
         max_price = max(integer_prices)
         min_price = min(integer_prices)
         logging.info("Scraping the site succeded.")

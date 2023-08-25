@@ -60,7 +60,7 @@ def scrape_site(scrape_url):
 def publish_prices(average_price, max_price, min_price):
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
-            logging.info("Connected to MQTT Broker!")
+            logging.info("Connected to MQTT Broker.")
         else:
             logging.error(f"Failed to connect to MQTT broker, return code { rc }")
 
@@ -82,7 +82,9 @@ def publish_prices(average_price, max_price, min_price):
     publish_price(max_topic, max_price)
     publish_price(min_topic, min_price)
 
-    client.loop_stop() 
+    client.loop_stop()
+    client.disconnect()
+    logging.info("Disconnected from MQTT Broker.")
 
 # Run the job on start
 job()
